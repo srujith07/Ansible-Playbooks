@@ -1,0 +1,16 @@
+---
+- hosts: nodes
+  user: ansible
+  become: yes
+  connection: ssh
+  vars:
+    files:
+      - /home/ansible/test.1
+      - /home/ansible/test.2
+      - /home/ansible/test.3
+  tasks:
+    - name: Adding files
+      file:
+        path: "{{ item }}"
+        state: touch
+      loop: "{{ files }}"

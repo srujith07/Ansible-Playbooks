@@ -1,0 +1,14 @@
+---
+- hosts: nodes
+  user: ansible
+  become: yes
+  connection: ssh
+  vars:
+    nname: httpd
+  tasks:
+    - name: installing httpd
+      action: yum name='{{nname}}' state=present
+      notify: copy http
+  handlers:
+    - name: copy http
+      action: copy src=hhtp.cpy dest=/home/ansible/

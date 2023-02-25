@@ -1,0 +1,8 @@
+---
+- hosts: nodes
+  user: ansible
+  become: yes
+  connection: ssh
+  tasks:
+    - name: Installing httpd
+      action: yum name=httpd state=present

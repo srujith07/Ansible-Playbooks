@@ -1,0 +1,10 @@
+---
+- hosts: nodes
+  user: ansible
+  become: yes
+  connection: ssh
+  vars:
+    nname: httpd
+  tasks:
+    - name: removing httpd
+      action: yum name='{{nname}}' state=absent
