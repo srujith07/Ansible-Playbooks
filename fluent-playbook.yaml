@@ -1,0 +1,84 @@
+---
+- hosts: dev
+  user: ansible
+  become: yes
+  connection: ssh
+  vars:
+    mpkg: fluent-bit
+  tasks:
+    - name: Getting Key
+      shell: sudo curl https://packages.fluentbit.io/fluentbit.key | gpg --dearmor >
+        /usr/share/keyrings/fluentbit-keyring.gpg
+      tags: key
+
+    - name: updating the /etc/apt/sources.list
+      lineinfile:
+        path: /etc/apt/sources.list
+        line: 'deb [signed-by=/usr/share/keyrings/fluentbit-keyring.gpg] https://packages.fluentbit.io/ubuntu/jammy jammy main'
+        insertafter: EOF      
+      tags: addingdeb
+
+    - name: updating apt
+      shell: sudo apt-get update
+
+
+    - name: installing fluent-bit
+      apt: 
+        name: "{{mpkg}}"
+        state: present  
+      tags: installing
+
+    - name: creating folders
+      shell: mkdir -p  /etc/fluent-bit/fluent-bit-inputs/ /etc/fluent-bit/fluent-bit-filters/ /etc/fluent-bit/fluent-bit-outputs/
+
+
+    - name: Delete lines from file
+      shell: sed -i '83,94d' /etc/fluent-bit/fluent-bit.conf
+
+
+    - name: Creating input
+      copy:
+        content: |
+          [INPUT]
+            Name       tail
+            Path       /var/log/syslog
+            Tag        syslog
+        dest: /etc/fluent-bit/fluent-bit-inputs/input.conf
+
+    - name: Creating filter
+      copy:
+        content: |
+          [FILTER]
+            Name record_modifier
+            Match *
+            Record hostname ${HOSTNAME}
+        dest: /etc/fluent-bit/fluent-bit-filters/filter.conf
+
+    - name: Creating output
+      copy:
+        content: |
+          [OUTPUT]
+            Name        stdout
+            Match       *
+        dest: /etc/fluent-bit/fluent-bit-outputs/output.conf
+          
+
+    - name: Append lines to file
+      lineinfile:
+        path: /etc/fluent-bit/fluent-bit.conf
+        line: |  
+          @INCLUDE /etc/fluent-bit/fluent-bit-inputs/input.conf
+          @INCLUDE /etc/fluent-bit/fluent-bit-filters/filter.conf
+          @INCLUDE /etc/fluent-bit/fluent-bit-outputs/output.conf
+        state: present  
+
+    - name: starting fluent-bit
+      service:
+        name: "{{mpkg}}"
+        state: started
+      tags: starting
+
+
+    - name: status
+      shell: systemctl status fluent-bit.service
+      tags: status
