@@ -1,0 +1,22 @@
+#              Main ansible play book it can be located any where
+
+---
+- hosts: dev
+  user: ansible
+  become: yes
+  connection: ssh
+  roles:
+    - myrole
+
+
+#             creating a file and adding some text to it, is the task that i am defining for my role it should be located in /etc/ansible/roles/myrole/tasks/main.yml
+#             Role name will be folder name and actions to be performed by that role will be stored inside /tasks/main.yml
+
+
+- name: Creating input
+  copy:
+    content: |
+      ex:
+           sample for
+        creating a file
+    dest: /home/ansible/sample.txt
